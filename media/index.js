@@ -9,6 +9,20 @@ const Media = require('./models/Media');
 const User = require('./models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+// Configuración CORS para permitir solo tu frontend en Vercel
+const corsOptions = {
+  origin: 'https://reballing.vercel.app', // URL pública de tu frontend en Vercel
+  optionsSuccessStatus: 200,              // Para navegadores antiguos
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Métodos permitidos
+  allowedHeaders: ['Content-Type', 'Authorization'],   // Headers permitidos
+  credentials: true,   // Si usas cookies o autenticación en front
+};
+
+const app = express();
+app.use(cors(corsOptions));
+app.use(express.json());
+
 // Middleware de autenticación JWT
 function authMiddleware(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -20,6 +34,11 @@ function authMiddleware(req, res, next) {
     next();
   });
 }
+
+app.get('/', (req, res) => {
+  res.send('API backend funcionando correctamente.');
+});
+
 
 // Registro de usuario
 app.post('/api/auth/register', async (req, res) => {
@@ -53,10 +72,6 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
 // Configuración de Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -72,7 +87,6 @@ mongoose.connect(process.env.MONGODB_URI, {
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
-
 
 // Endpoint para subir media (protegido)
 app.post('/api/media', authMiddleware, upload.single('file'), async (req, res) => {
